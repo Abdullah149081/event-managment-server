@@ -32,10 +32,12 @@ async function run() {
     */
     app.get("/events", async (req, res) => {
       try {
+        const limit = parseInt(req.query.limit)
+
         const results = await eventsCollection
           .find({ isDeleted: false })
           .sort({ createdAt: -1 })
-          .limit(6)
+          .limit(limit)
           .project({ isDeleted: 0, updatedAt: 0, deletedAt: 0, createdAt: 0 })
           .toArray();
 
@@ -74,7 +76,6 @@ async function run() {
     app.put("/events/:id", async (req, res) => {
       try {
         const id = req.params.id;
-        console.log("id", id);
         const updatedEvent = req.body;
         console.log("updatedEvent", updatedEvent);
         const filter = { _id: new ObjectId(id) };
