@@ -23,7 +23,7 @@ async function run() {
     await client.connect();
     console.log("Connected to MongoDB");
 
-    const db = client.db("events");
+    const db = client.db("eventsDB");
     const eventsCollection = db.collection("events");
 
     // Routes
@@ -32,11 +32,11 @@ async function run() {
     */
     app.get("/events", async (req, res) => {
       try {
-        const limit = parseInt(req.query.limit)
+        const limit = parseInt(req.query.limit);
 
         const results = await eventsCollection
           .find({ isDeleted: false })
-          .sort({ createdAt: -1 })
+          .sort({ createdAt: -1, updatedAt: -1 })
           .limit(limit)
           .project({ isDeleted: 0, updatedAt: 0, deletedAt: 0, createdAt: 0 })
           .toArray();
@@ -79,14 +79,13 @@ async function run() {
         const updatedEvent = req.body;
         console.log("updatedEvent", updatedEvent);
         const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
         const updateDoc = {
           $set: {
             ...updatedEvent,
             updatedAt: new Date(),
           },
         };
-
-        const options = { upsert: true };
 
         const result = await eventsCollection.updateOne(
           filter,
@@ -100,7 +99,7 @@ async function run() {
 
         res.json({
           message: "Event updated successfully",
-          result,
+          data: result,
         });
       } catch (error) {
         console.error("Error updating event:", error);
