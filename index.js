@@ -62,7 +62,7 @@ async function run() {
         if (result.acknowledged === true) {
           res.json({
             message: "Event created successfully",
-            eventId: result.insertedId,
+            data: result
           });
         } else {
           res.status(500).json({ message: "Failed to create event" });
@@ -126,7 +126,7 @@ async function run() {
 
         res.json({
           message: "Event deleted successfully",
-          result,
+          data: result,
         });
       } catch (error) {
         console.error("Error deleting event:", error);
