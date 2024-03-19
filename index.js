@@ -26,6 +26,7 @@ async function run() {
     const db = client.db("eventsDB");
     const eventsCollection = db.collection("events");
     const recentCollection = db.collection("recent");
+    const servicesCollection = db.collection("services");
 
     // Routes
     /* 
@@ -237,6 +238,112 @@ async function run() {
         });
       } catch (error) {
         console.error("Error deleting recent:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    /* 
+      services Route
+     */
+
+    app.get("/services", async (req, res) => {
+      try {
+        const limit = parseInt(req.query.limit);
+        const results = await servicesCollection
+          .find({ isDeleted: false })
+          .sort({ createdAt: -1, updatedAt: -1 })
+          .project({ isDeleted: 0, updatedAt: 0, deletedAt: 0, createdAt: 0 })
+          .limit(limit)
+          .toArray();
+
+        if (results.length === 0) {
+          return res.status(404).json({ message: "No services found" });
+        }
+
+        res.json(results);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    app.post("/services", async (req, res) => {
+      try {
+        const service = req.body;
+        service.createdAt = new Date();
+        service.isDeleted = false;
+        const result = await servicesCollection.insertOne(service);
+
+        if (result.acknowledged === true) {
+          res.json({
+            message: "Service created successfully",
+            data: result,
+          });
+        } else {
+          res.status(500).json({ message: "Failed to create service" });
+        }
+      } catch (error) {
+        console.error("Error creating service:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    app.put("/services/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updatedService = req.body;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            ...updatedService,
+            updatedAt: new Date(),
+          },
+        };
+
+        const result = await servicesCollection.updateOne(
+          filter,
+          updateDoc,
+          options
+        );
+
+        if (result.modifiedCount === 0 && result.upsertedCount === 0) {
+          return res.status(404).json({ message: "Service not found" });
+        }
+
+        res.json({
+          message: "Service updated successfully",
+          data: result,
+        });
+      } catch (error) {
+        console.error("Error updating service:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    app.delete("/services/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            isDeleted: true,
+            deletedAt: new Date(),
+          },
+        };
+
+        const result = await servicesCollection.updateOne(filter, updateDoc);
+
+        if (result.modifiedCount === 0) {
+          return res.status(404).json({ message: "Service not found" });
+        }
+
+        res.json({
+          message: "Service deleted successfully",
+          data: result,
+        });
+      } catch (error) {
+        console.error("Error deleting service:", error);
         res.status(500).json({ message: "Internal server error" });
       }
     });
