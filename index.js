@@ -27,6 +27,7 @@ async function run() {
     const eventsCollection = db.collection("events");
     const recentCollection = db.collection("recent");
     const servicesCollection = db.collection("services");
+    const pricingCollection = db.collection("pricing");
 
     // Routes
     /* 
@@ -347,6 +348,28 @@ async function run() {
         res.status(500).json({ message: "Internal server error" });
       }
     });
+
+    /* 
+         pricing Route
+    */
+
+    app.get("/pricing", async (req, res) => {
+      try {
+        const results = await pricingCollection.find().toArray();
+
+        if (results.length === 0) {
+          return res.status(404).json({ message: "No pricing found" });
+        }
+
+        res.json(results);
+      } catch (error) {
+        console.error("Error fetching pricing:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+
+
 
     // Start the server
     app.listen(port, () => {
