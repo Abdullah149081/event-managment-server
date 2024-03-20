@@ -29,6 +29,7 @@ async function run() {
     const servicesCollection = db.collection("services");
     const pricingCollection = db.collection("pricing");
     const reviewsCollection = db.collection("reviews");
+    const featuredCollection = db.collection("featured");
 
     // Routes
     /* 
@@ -384,6 +385,27 @@ async function run() {
         res.json(results);
       } catch (error) {
         console.error("Error fetching reviews:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    /* 
+         featured Route
+    */
+
+    app.get("/featured", async (req, res) => {
+      try {
+        const results = await featuredCollection
+          .find()
+          .toArray();
+
+        if (results.length === 0) {
+          return res.status(404).json({ message: "No featured found" });
+        }
+
+        res.json(results);
+      } catch (error) {
+        console.error("Error fetching featured:", error);
         res.status(500).json({ message: "Internal server error" });
       }
     });
